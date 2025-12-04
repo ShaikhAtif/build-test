@@ -24,15 +24,6 @@ jobs:
       - name: Build React App
         run: npm run build
 
-      - name: Clear old build
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          port: ${{ secrets.SERVER_PORT }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: sudo rm -rf /var/www/testing-app/*
-
       - name: Upload Build to Testing Folder
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -42,6 +33,20 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "out/**"
           target: "/var/www/testing-app/"
+
+      - name: Move testing build content + remove out folder
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          port: ${{ secrets.SERVER_PORT }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Move all contents from /var/www/testing-app/out/ to /var/www/testing-app/
+            mv /var/www/testing-app/out/* /var/www/testing-app/
+
+            # Remove nested empty folder
+            rm -rf /var/www/testing-app/out
 
       - name: Reload Nginx
         uses: appleboy/ssh-action@v0.1.7
